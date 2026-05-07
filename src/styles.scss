@@ -1,0 +1,563 @@
+// ===== GMAO Industrial Dashboard - Global Styles (Tri-color Brand Theme v2) =====
+// Gradient lives on BACKGROUNDS (sidebar, hero bands, accents) — NOT on table headers.
+// Supports light (default) and dark modes via [data-theme="dark"] on <html>.
+
+// =====================================================================
+// Brand palette (theme-independent) — used as SCSS vars everywhere
+// =====================================================================
+$brand-sage:         #a4c494;
+$brand-sage-dark:    #7aaa68;
+$brand-sage-light:   #c8dfc0;
+$brand-magenta:      #ca25b6;
+$brand-magenta-dark: #9c1b8a;
+$brand-magenta-light:#e673d8;
+$brand-grey:         #828794;
+$brand-grey-dark:    #5a5c65;
+$brand-grey-light:   #b0b2bb;
+
+// Back-compat aliases
+$brand-navy:      $brand-sage;
+$brand-navy-dark: $brand-sage-dark;
+$brand-cyan:      $brand-magenta;
+$brand-cyan-dark: $brand-magenta-dark;
+$accent-blue:     $brand-magenta;
+$accent-purple:   $brand-grey;
+
+// State accents
+$accent-green:  #a4c494;
+$accent-orange: #e8a020;
+$accent-red:    #d9534f;
+
+// Brand gradient (used for sidebar, hero banners, accents — never table headers)
+$gradient-brand: linear-gradient(90deg, #a4c494, #ca25b6, #828794);
+
+$sidebar-width: 260px;
+$radius-card:   14px;
+
+// =====================================================================
+// LIGHT THEME (default)
+// =====================================================================
+:root {
+  /* Raw palette echo */
+  --color-sage:     #a4c494;
+  --color-magenta:  #ca25b6;
+  --color-grey:     #828794;
+
+  --color-primary:       #a4c494;
+  --color-primary-dark:  #7aaa68;
+  --color-primary-light: #c8dfc0;
+  --color-accent:        #ca25b6;
+  --color-accent-dark:   #9c1b8a;
+  --color-accent-light:  #e673d8;
+  --color-neutral:       #828794;
+  --color-neutral-dark:  #5a5c65;
+  --color-neutral-light: #b0b2bb;
+
+  /* Signature gradient (used on backgrounds only) */
+  --gradient-brand:        linear-gradient(90deg, #a4c494, #ca25b6, #828794);
+  --gradient-brand-webkit: -webkit-linear-gradient(90deg, #a4c494, #ca25b6, #828794);
+
+  /* App surfaces */
+  --bg-app:             #f5f7f4;
+  --bg-app-gradient:    linear-gradient(135deg, #f7f9f6 0%, #eef0ef 100%);
+  --bg-card:            #ffffff;
+  --bg-card-hover:      #fafbfa;
+  --bg-surface-raised:  #ffffff;
+  --bg-topbar:          #ffffff;
+  --bg-page-hero:       linear-gradient(90deg, #a4c494, #ca25b6, #828794);
+
+  /* Sidebar — brand gradient on full-platform background */
+  --bg-sidebar:         linear-gradient(180deg, #a4c494 0%, #ca25b6 55%, #828794 100%);
+  --sidebar-text:       #ffffff;
+  --sidebar-text-muted: rgba(255, 255, 255, 0.78);
+  --sidebar-border:     rgba(255, 255, 255, 0.18);
+  --sidebar-hover-bg:   rgba(255, 255, 255, 0.15);
+  --sidebar-active-bg:  rgba(255, 255, 255, 0.24);
+
+  /* Text */
+  --color-text-primary:   #1a1b1f;
+  --color-text-secondary: #374151;
+  --color-text-muted:     #374151;
+  --color-text-inverse:   #ffffff;
+
+  /* Borders */
+  --color-border:         #e2e5e2;
+  --color-border-strong:  rgba(202, 37, 182, 0.30);
+
+  /* Table — NEUTRAL headers (no gradient) */
+  --table-header-bg:      #f0f2f0;
+  --table-header-text:    #1a1b1f;
+  --table-border:         #e0e2e0;
+  --table-row-hover:      rgba(164, 196, 148, 0.12);
+  --table-row-alt:        #fafbfa;
+
+  /* Shadows */
+  --shadow-card:       0 2px 12px rgba(130, 135, 148, 0.14);
+  --shadow-card-hover: 0 8px 24px rgba(202, 37, 182, 0.16);
+  --shadow-soft:       0 2px 8px rgba(0, 0, 0, 0.06);
+
+  --radius-card: 14px;
+  --transition:  0.25s ease;
+
+  /* Focus ring */
+  --focus-ring: rgba(202, 37, 182, 0.25);
+}
+
+// =====================================================================
+// DARK THEME (override)
+// =====================================================================
+[data-theme="dark"] {
+  --bg-app:             #151018;
+  --bg-app-gradient:    linear-gradient(135deg, #151018, #181320, #1b1622);
+  --bg-card:            #1a1522;
+  --bg-card-hover:      #221a2c;
+  --bg-surface-raised:  #261d31;
+  --bg-topbar:          #1a1522;
+  --bg-page-hero:       linear-gradient(90deg, #2a3d26, #4a1245, #2a2b32);
+
+  --bg-sidebar:         linear-gradient(180deg, #151018 0%, #1b1622 100%);
+  --sidebar-text:       #ffffff;
+  --sidebar-text-muted: #c9c3d1;
+  --sidebar-border:     rgba(164, 196, 148, 0.10);
+  --sidebar-hover-bg:   rgba(202, 37, 182, 0.08);
+  --sidebar-active-bg:  rgba(202, 37, 182, 0.14);
+
+  --color-text-primary:   #ffffff;
+  --color-text-secondary: #c9c3d1;
+  --color-text-muted:     #828794;
+
+  --color-border:         rgba(164, 196, 148, 0.10);
+  --color-border-strong:  rgba(202, 37, 182, 0.25);
+
+  --table-header-bg:      #26272e;
+  --table-header-text:    #ffffff;
+  --table-border:         rgba(164, 196, 148, 0.10);
+  --table-row-hover:      rgba(202, 37, 182, 0.08);
+  --table-row-alt:        #1a1522;
+
+  --shadow-card:       0 4px 16px rgba(130, 135, 148, 0.28);
+  --shadow-card-hover: 0 10px 30px rgba(202, 37, 182, 0.20);
+  --shadow-soft:       0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+// --- Reset & Base ---
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg-app-gradient);
+  background-attachment: fixed;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.6;
+  transition: background 0.3s ease, color 0.25s ease;
+}
+
+// --- Global links ---
+a { color: $brand-magenta; transition: color 0.25s ease; }
+a:hover { color: $brand-magenta-light; }
+
+// --- Scrollbar ---
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track { background: var(--bg-app); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, $brand-sage, $brand-magenta, $brand-grey);
+  border-radius: 4px;
+  &:hover { background: linear-gradient(180deg, lighten($brand-sage, 6%), lighten($brand-magenta, 4%), lighten($brand-grey, 6%)); }
+}
+
+// --- Cards ---
+.gmao-card {
+  background: var(--bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  transition: background 0.3s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  color: var(--color-text-primary);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--gradient-brand);
+    background-size: 200% 100%;
+    animation: gradientShift 4s ease infinite;
+  }
+
+  &:hover {
+    border-color: var(--color-border-strong);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+  }
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.stat-card {
+  @extend .gmao-card;
+  .stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: $brand-magenta;
+    line-height: 1;
+  }
+  .stat-label {
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .stat-icon {
+    font-size: 2.5rem;
+    opacity: 0.2;
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
+// --- Page Header ---
+.page-header {
+  margin-bottom: 28px;
+
+  h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    border-left: 5px solid $brand-magenta;
+    padding-left: 12px;
+    margin-bottom: 6px;
+  }
+  p {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    padding-left: 17px;
+  }
+}
+
+// --- Reusable brand gradient bar (hero band) ---
+.brand-bar, .page-hero, .content-header {
+  background: var(--bg-page-hero);
+  color: #ffffff;
+  padding: 28px 24px;
+  border-radius: $radius-card;
+  box-shadow: var(--shadow-card);
+}
+
+// --- Tables (NEUTRAL headers — subtle sage accent border only) ---
+.gmao-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--bg-card);
+  border-radius: $radius-card;
+  overflow: hidden;
+
+  thead tr th {
+    background: var(--table-header-bg);
+    color: var(--table-header-text);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 12px 16px;
+    border-bottom: 2px solid $brand-sage;
+    font-weight: 600;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--table-border);
+    transition: background 0.2s;
+
+    &:nth-child(even) { background: var(--table-row-alt); }
+    &:hover { background: var(--table-row-hover); }
+
+    td {
+      padding: 12px 16px;
+      color: var(--color-text-primary);
+      font-size: 0.875rem;
+      border-bottom: 1px solid var(--table-border);
+    }
+  }
+}
+
+// Safety net: neutralize gradient on any raw table headers too
+table thead th,
+.table > thead > tr > th {
+  background: var(--table-header-bg) !important;
+  color: var(--table-header-text) !important;
+  border-bottom: 2px solid $brand-sage !important;
+}
+
+// --- Badges ---
+.badge-status {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &.operational { background: rgba($brand-sage, 0.18);    color: $brand-sage-dark; border: 1px solid rgba($brand-sage, 0.45); }
+  &.maintenance { background: rgba($accent-orange, 0.15); color: $accent-orange;   border: 1px solid rgba($accent-orange, 0.3); }
+  &.broken      { background: rgba($accent-red, 0.15);    color: $accent-red;      border: 1px solid rgba($accent-red, 0.3); }
+  &.idle        { background: rgba($brand-grey, 0.18);    color: $brand-grey-dark; border: 1px solid rgba($brand-grey, 0.35); }
+  &.pending     { background: rgba($brand-grey, 0.18);    color: $brand-grey-dark; border: 1px solid rgba($brand-grey, 0.35); }
+  &.in-progress { background: rgba($brand-magenta, 0.18); color: $brand-magenta;   border: 1px solid rgba($brand-magenta, 0.35); }
+  &.completed   { background: rgba($brand-sage, 0.18);    color: $brand-sage-dark; border: 1px solid rgba($brand-sage, 0.45); }
+  &.cancelled   { background: rgba($brand-grey, 0.15);    color: $brand-grey-dark; border: 1px solid rgba($brand-grey, 0.3); }
+  &.unknown     { background: rgba($brand-grey, 0.15);    color: $brand-grey;      border: 1px solid rgba($brand-grey, 0.3); }
+}
+
+[data-theme="dark"] .badge-status {
+  &.operational { color: $brand-sage; }
+  &.idle        { color: $brand-grey-light; }
+  &.pending     { color: $brand-grey-light; }
+  &.completed   { color: $brand-sage; }
+  &.cancelled   { color: $brand-grey-light; }
+  &.unknown     { color: $brand-grey-light; }
+}
+
+// --- Buttons ---
+.btn-gmao {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  &.primary {
+    background: linear-gradient(90deg, $brand-magenta, $brand-magenta-dark);
+    color: #ffffff;
+    &:hover { background: linear-gradient(90deg, lighten($brand-magenta, 6%), $brand-magenta); box-shadow: 0 4px 15px rgba($brand-magenta, 0.35); }
+  }
+  &.danger {
+    background: linear-gradient(135deg, $accent-red, darken($accent-red, 12%));
+    color: #ffffff;
+    &:hover { background: linear-gradient(135deg, lighten($accent-red, 5%), darken($accent-red, 8%)); box-shadow: 0 4px 15px rgba($accent-red, 0.3); }
+  }
+  &.success {
+    background: linear-gradient(135deg, $brand-sage, $brand-sage-dark);
+    color: #1a1b1f;
+    &:hover { background: linear-gradient(135deg, lighten($brand-sage, 5%), $brand-sage); box-shadow: 0 4px 15px rgba($brand-sage, 0.35); }
+  }
+  &.outline {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    &:hover { border-color: $brand-magenta; color: $brand-magenta; background: linear-gradient(135deg, rgba($brand-magenta, 0.08), rgba($brand-sage, 0.05)); }
+  }
+  &.gradient {
+    background: $gradient-brand;
+    color: #ffffff;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    &:hover { box-shadow: 0 6px 20px rgba($brand-magenta, 0.40); }
+  }
+}
+
+// --- Forms ---
+.form-control, .form-select {
+  background: var(--bg-surface-raised) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text-primary) !important;
+  border-radius: 8px;
+  padding: 10px 14px;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.25s;
+
+  &:focus {
+    border-color: $brand-magenta !important;
+    box-shadow: 0 0 0 3px var(--focus-ring), 0 0 15px rgba($brand-magenta, 0.08) !important;
+    outline: none;
+    background: var(--bg-surface-raised) !important;
+  }
+
+  &::placeholder { color: var(--color-text-muted) !important; }
+
+  option {
+    background: var(--bg-card);
+    color: var(--color-text-primary);
+  }
+}
+
+.form-label {
+  color: var(--color-text-secondary) !important;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+// Override Bootstrap's .text-muted (rgba alpha by default → too light on white)
+.text-muted { color: var(--color-text-secondary) !important; }
+
+// --- Progress Bar ---
+.progress-gmao {
+  height: 8px;
+  background: var(--bg-app);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: $gradient-brand;
+    transition: width 1s ease;
+
+    &.success { background: linear-gradient(90deg, $brand-sage, $brand-sage-dark); }
+    &.warning { background: linear-gradient(90deg, $accent-orange, darken($accent-orange, 15%)); }
+    &.danger  { background: linear-gradient(90deg, $accent-red, darken($accent-red, 15%)); }
+  }
+}
+
+// --- Modal ---
+.modal-backdrop-dark {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  z-index: 1040;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-gmao {
+  background: var(--bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: var(--shadow-card-hover);
+  width: 540px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  z-index: 1050;
+  color: var(--color-text-primary);
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--color-border);
+
+    h3 { font-size: 1.2rem; font-weight: 600; }
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      font-size: 1.5rem;
+      line-height: 1;
+      &:hover { color: $accent-red; }
+    }
+  }
+}
+
+// --- Alert Box ---
+.alert-gmao {
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+
+  &.info    { background: linear-gradient(135deg, rgba($brand-grey, 0.14),   rgba($brand-grey, 0.06));    border: 1px solid rgba($brand-grey, 0.35);    color: $brand-grey-dark; }
+  &.warning { background: linear-gradient(135deg, rgba($accent-orange, 0.12),rgba($accent-orange, 0.05)); border: 1px solid rgba($accent-orange, 0.3);  color: $accent-orange; }
+  &.danger  { background: linear-gradient(135deg, rgba($accent-red, 0.12),   rgba($accent-red, 0.05));    border: 1px solid rgba($accent-red, 0.3);     color: $accent-red; }
+  &.success { background: linear-gradient(135deg, rgba($brand-sage, 0.18),   rgba($brand-sage, 0.06));    border: 1px solid rgba($brand-sage, 0.40);    color: $brand-sage-dark; }
+}
+
+[data-theme="dark"] .alert-gmao {
+  &.info    { color: $brand-grey-light; }
+  &.success { color: $brand-sage; }
+}
+
+// --- Risk Score Color ---
+.risk-score {
+  font-weight: 700;
+  &.low { color: $brand-sage-dark; }
+  &.medium { color: $brand-magenta; }
+  &.high { color: $accent-orange; }
+  &.critical { color: $accent-red; animation: pulse 1.5s infinite; }
+}
+
+[data-theme="dark"] .risk-score.low { color: $brand-sage; }
+
+// --- Animations ---
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.slide-in { animation: slideIn 0.3s ease forwards; }
+.fade-in { animation: fadeIn 0.3s ease forwards; }
+
+// --- Chart Canvas ---
+canvas { max-width: 100%; }
+
+// --- AI Chat message formatting ---
+.metric {
+  color: $brand-magenta;
+  font-weight: 600;
+}
+.bullet {
+  color: $brand-sage-dark;
+}
+[data-theme="dark"] .bullet { color: $brand-sage; }
+
+// --- Modal Actions ---
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+// --- Mobile ---
+@media (max-width: 768px) {
+  .gmao-card { padding: 14px; }
+  .stat-card .stat-value { font-size: 1.8rem; }
+  .modal-gmao { width: 95vw; padding: 20px; }
+}

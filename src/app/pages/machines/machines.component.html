@@ -1,0 +1,190 @@
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-gear-wide-connected"></i> {{ isTechnician ? 'Équipements' : 'Gestion des Machines' }}</h1>
+    <p>{{ isTechnician ? 'Consulter les équipements et mettre à jour leur statut' : 'Surveiller et gérer le parc d\'équipements industriels' }}</p>
+  </div>
+  <button class="btn-gmao primary" (click)="openCreate()" *ngIf="canManageMachines">
+    <i class="bi bi-plus-circle-fill"></i> Ajouter une machine
+  </button>
+</div>
+
+<div class="alert-gmao success" *ngIf="success"><i class="bi bi-check-circle-fill"></i> {{ success }}</div>
+<div class="alert-gmao danger" *ngIf="error"><i class="bi bi-exclamation-triangle-fill"></i> {{ error }}</div>
+
+<!-- Filtres -->
+<div class="gmao-card filters-card">
+  <div class="filters-row">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="text" [(ngModel)]="searchTerm" placeholder="Rechercher des machines..." class="form-control">
+    </div>
+    <select [(ngModel)]="filterStatus" class="form-select status-filter">
+      <option value="">Tous les statuts</option>
+      <option *ngFor="let s of statuses" [value]="s">{{ getStatusLabel(s) }}</option>
+    </select>
+    <span class="result-count">{{ filteredMachines.length }} machines</span>
+  </div>
+</div>
+
+<div class="loading-state" *ngIf="loading"><div class="loading-spinner"></div></div>
+
+<!-- Grille des machines -->
+<div class="machines-grid" *ngIf="!loading">
+  <div class="machine-card gmao-card" *ngFor="let m of filteredMachines">
+    <div class="machine-status-indicator" [class]="getStatusClass(m.status)"></div>
+    <div class="machine-header">
+      <div class="machine-icon"><i class="bi bi-gear-wide-connected"></i></div>
+      <div class="machine-info">
+        <h4>{{ m.name }}</h4>
+        <span class="machine-model">{{ m.model || 'N/A' }}</span>
+      </div>
+      <span class="badge-status" [class]="getStatusClass(m.status)">{{ getStatusLabel(m.status) }}</span>
+    </div>
+
+    <div class="machine-details">
+      <div class="detail-row"><i class="bi bi-geo-alt-fill"></i> <span>{{ m.location || 'Aucune localisation' }}</span></div>
+      <div class="detail-row" *ngIf="m.maintenanceDate"><i class="bi bi-calendar-check-fill"></i> <span>Maintenance: {{ m.maintenanceDate | date:'d MMM yyyy' }}</span></div>
+    </div>
+
+    <!-- Technician: status change + telemetry -->
+    <div class="machine-status-update" *ngIf="isTechnician">
+      <label class="form-label"><i class="bi bi-arrow-repeat"></i> Changer le statut</label>
+      <select class="form-select form-select-sm" [ngModel]="m.status" (ngModelChange)="updateStatus(m, $event)">
+        <option *ngFor="let s of statuses" [value]="s">{{ getStatusLabel(s) }}</option>
+      </select>
+    </div>
+    <div class="machine-actions" *ngIf="isTechnician">
+      <button class="btn-icon-sm telemetry" (click)="openDataModal(m)" title="Données télémétriques"><i class="bi bi-activity"></i> Données</button>
+    </div>
+
+    <div class="machine-actions" *ngIf="!isTechnician">
+      <button class="btn-icon-sm telemetry" (click)="openDataModal(m)" title="Ajouter des données télémétriques"><i class="bi bi-activity"></i> Données</button>
+      <button class="btn-icon-sm edit" (click)="openEdit(m)" *ngIf="canManageMachines" title="Modifier"><i class="bi bi-pencil-fill"></i></button>
+      <button class="btn-icon-sm delete" (click)="delete(m)" *ngIf="isAdmin" title="Supprimer"><i class="bi bi-trash-fill"></i></button>
+    </div>
+  </div>
+
+  <div class="empty-card" *ngIf="filteredMachines.length === 0">
+    <i class="bi bi-gear"></i>
+    <p>Aucune machine trouvée</p>
+  </div>
+</div>
+
+<!-- Modal de création/modification de machine -->
+<div class="modal-backdrop-dark" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-gmao" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ editingMachine ? 'Modifier la machine' : 'Ajouter une nouvelle machine' }}</h3>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+    <div class="alert-gmao danger" *ngIf="error"><i class="bi bi-exclamation-triangle-fill"></i> {{ error }}</div>
+    <form [formGroup]="machineForm" (ngSubmit)="save()">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label">Nom de la machine *</label>
+          <input type="text" formControlName="name" required class="form-control" placeholder="Machine CNC Alpha">
+        </div>
+        <div class="col-6">
+          <label class="form-label">Modèle * <small class="text-muted">(identifiant unique)</small></label>
+          <input type="text" formControlName="model" required class="form-control" placeholder="FANUC-30i">
+          <small class="text-danger" *ngIf="machineForm.get('model')?.touched && machineForm.get('model')?.hasError('required')">
+            Le modèle est obligatoire et doit être unique.
+          </small>
+        </div>
+        <div class="col-6">
+          <label class="form-label">Localisation *</label>
+          <select formControlName="location" class="form-select">
+            <option value="" disabled>— Sélectionner —</option>
+            <option *ngFor="let loc of locations" [value]="loc">{{ loc }}</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label class="form-label">Statut *</label>
+          <select formControlName="status" class="form-select">
+            <option *ngFor="let s of statuses" [value]="s">{{ getStatusLabel(s) }}</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label class="form-label">Prochaine maintenance</label>
+          <input type="date" formControlName="maintenanceDate" class="form-control" [attr.min]="todayString">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-gmao outline" (click)="closeModal()">Annuler</button>
+        <button type="submit" class="btn-gmao primary" [disabled]="saving || machineForm.invalid">
+          <span *ngIf="!saving"><i class="bi bi-save-fill"></i> {{ editingMachine ? 'Mettre à jour' : 'Créer' }}</span>
+          <span *ngIf="saving"><span class="spinner-sm"></span> Enregistrement...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de télémétrie -->
+<div class="modal-backdrop-dark" *ngIf="showDataModal" (click)="closeDataModal()">
+  <div class="modal-gmao modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="bi bi-activity"></i> Télémétrie: {{ selectedMachine?.name }}</h3>
+      <button class="close-btn" (click)="closeDataModal()">×</button>
+    </div>
+
+    <div class="alert-gmao success" *ngIf="telemetrySuccess" style="margin-bottom: 12px;">
+      <i class="bi bi-check-circle-fill"></i> {{ telemetrySuccess }}
+    </div>
+    <div class="alert-gmao danger" *ngIf="error" style="margin-bottom: 12px;">
+      <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+    </div>
+
+    <form [formGroup]="dataForm" (ngSubmit)="saveTelemetry()" class="telemetry-form">
+      <div class="row g-3">
+        <div class="col-3">
+          <label class="form-label"><i class="bi bi-thermometer-half"></i> Température (°C)</label>
+          <input type="number" formControlName="temperature" class="form-control" placeholder="65.0" step="0.1">
+        </div>
+        <div class="col-3">
+          <label class="form-label"><i class="bi bi-soundwave"></i> Vibration (mm/s)</label>
+          <input type="number" formControlName="vibration" class="form-control" placeholder="2.5" step="0.1">
+        </div>
+        <div class="col-3">
+          <label class="form-label"><i class="bi bi-clock-fill"></i> Temps de fonctionnement (heures)</label>
+          <input type="number" formControlName="runtime" class="form-control" placeholder="350" step="1">
+        </div>
+        <div class="col-3">
+          <label class="form-label"><i class="bi bi-lightning-charge-fill"></i> Tension (V)</label>
+          <input type="number" formControlName="tension" class="form-control" placeholder="220" step="0.1" min="0">
+        </div>
+      </div>
+      <button type="submit" class="btn-gmao primary" style="margin-top:12px" [disabled]="saving || dataForm.invalid">
+        <span *ngIf="!saving"><i class="bi bi-plus-circle-fill"></i> Enregistrer les données</span>
+        <span *ngIf="saving"><span class="spinner-sm"></span> Enregistrement...</span>
+      </button>
+    </form>
+
+    <h4 class="sub-title">Relevés récents</h4>
+    <div class="table-responsive">
+      <table class="gmao-table">
+        <thead>
+        <tr>
+          <th>Date</th>
+          <th>Température</th>
+          <th>Vibration</th>
+          <th>Temps de fonctionnement</th>
+          <th>Tension</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let d of machineData">
+          <td>{{ d.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td [class.temp-warn]="d.temperature && d.temperature >= 70" [class.temp-crit]="d.temperature && d.temperature >= 90">{{ d.temperature }}°C</td>
+          <td [class.vib-warn]="d.vibration && d.vibration >= 4.5" [class.vib-crit]="d.vibration && d.vibration >= 7.0">{{ d.vibration }} mm/s</td>
+          <td>{{ d.runtime }} h</td>
+          <td>{{ d.tension != null ? d.tension + ' V' : '—' }}</td>
+        </tr>
+        <tr *ngIf="machineData.length === 0">
+          <td colspan="5" style="text-align:center; padding:20px; color: var(--color-text-secondary)">Aucune donnée télémétrique disponible</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

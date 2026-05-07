@@ -1,0 +1,96 @@
+<aside class="sidebar" [class.collapsed]="isCollapsed">
+  <!-- Logo / Marque -->
+  <div class="sidebar-brand">
+    <div class="brand-icon">
+      <i class="bi bi-gear-wide-connected"></i>
+    </div>
+    <div class="brand-text" *ngIf="!isCollapsed">
+      <span class="brand-name">GMAO</span>
+      <span class="brand-sub">Système Industriel</span>
+    </div>
+    <button class="collapse-btn" (click)="isCollapsed = !isCollapsed">
+      <i class="bi" [class.bi-chevron-left]="!isCollapsed" [class.bi-chevron-right]="isCollapsed"></i>
+    </button>
+  </div>
+
+  <!-- Informations utilisateur -->
+  <div class="sidebar-user" *ngIf="!isCollapsed">
+    <div class="user-avatar">
+      <span>{{ currentUser?.name?.charAt(0) }}</span>
+    </div>
+    <div class="user-info">
+      <span class="user-name">{{ currentUser?.name }}</span>
+      <span class="user-role" [class]="getRoleBadgeClass()">{{ getRoleLabel() }}</span>
+    </div>
+  </div>
+
+  <!-- Cloche de notification de maintenance -->
+  <div class="alert-bell-wrap" *ngIf="alertCount > 0"
+       (mouseenter)="hovering = true"
+       (mouseleave)="hovering = false">
+    <button class="alert-bell-btn"
+            [title]="isCollapsed ? alertCount + ' alertes de maintenance' : ''"
+            [class.has-overdue]="overdueCount > 0"
+            (click)="toggleAlertDropdown()">
+      <i class="bi bi-bell-fill"></i>
+      <span class="alert-badge">{{ alertCount }}</span>
+    </button>
+    <span *ngIf="!isCollapsed" class="alert-bell-label">
+      {{ overdueCount > 0 ? overdueCount + ' en retard' : alertCount + ' à venir' }}
+    </span>
+
+    <!-- Dropdown always in DOM, visibility controlled by CSS class -->
+    <div class="alert-dropdown"
+         [class.show]="showAlertDropdown || hovering && !isCollapsed">
+      <div class="alert-dropdown-header">
+        <i class="bi bi-calendar-exclamation-fill"></i> Alertes de Maintenance
+      </div>
+      <div class="alert-dropdown-item" *ngFor="let alert of maintenanceAlerts"
+           [class.overdue]="alert.overdue">
+        <div class="alert-item-name">
+          <i class="bi bi-gear-fill"></i> {{ alert.machineName }}
+          <span class="priority-badge" [class]="getPriorityClass(alert.priority)">
+            {{ alert.priority }}
+          </span>
+        </div>
+        <div class="alert-item-date">
+          <span *ngIf="alert.overdue" class="overdue-badge">EN RETARD</span>
+          <span *ngIf="!alert.overdue">Prévue dans {{ alert.daysUntil }} jour(s)</span>
+          — {{ alert.maintenanceDate | date:'dd MMM yyyy' }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+    <div class="nav-section-label" *ngIf="!isCollapsed">NAVIGATION</div>
+    <a *ngFor="let item of filteredNavItems"
+       [routerLink]="item.route"
+       routerLinkActive="active"
+       class="nav-item"
+       [title]="isCollapsed ? item.label : ''">
+      <i class="bi" [class]="item.icon"></i>
+      <span *ngIf="!isCollapsed" class="nav-label">{{ item.label }}</span>
+      <span *ngIf="!isCollapsed && item.route === '/ai-predictions'" class="nav-badge">IA</span>
+    </a>
+  </nav>
+
+  <!-- Pied de page de la barre latérale -->
+  <div class="sidebar-footer">
+    <button class="theme-toggle-btn"
+            (click)="toggleTheme()"
+            [title]="isCollapsed ? (theme === 'dark' ? 'Passer en clair' : 'Passer en sombre') : ''"
+            aria-label="Basculer entre le mode clair et sombre">
+      <i class="bi bi-sun-fill theme-icon theme-icon--dark"></i>
+      <i class="bi bi-moon-stars-fill theme-icon theme-icon--light"></i>
+      <span *ngIf="!isCollapsed" class="theme-label">
+        {{ theme === 'dark' ? 'Mode clair' : 'Mode sombre' }}
+      </span>
+    </button>
+    <button class="logout-btn" (click)="logout()" [title]="isCollapsed ? 'Déconnexion' : ''">
+      <i class="bi bi-box-arrow-left"></i>
+      <span *ngIf="!isCollapsed">Déconnexion</span>
+    </button>
+  </div>
+</aside>

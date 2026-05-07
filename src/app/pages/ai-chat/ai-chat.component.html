@@ -1,0 +1,136 @@
+<div class="chat-layout">
+  <!-- Barre latérale -->
+  <div class="chat-sidebar">
+    <div class="sidebar-header">
+      <div class="ai-avatar">
+        <i class="bi bi-robot"></i>
+        <span class="ai-online-dot"></span>
+      </div>
+      <div>
+        <h3>Assistant IA</h3>
+        <span class="ai-status">En ligne</span>
+      </div>
+    </div>
+
+    <!-- Sélecteur de machine -->
+    <div class="machine-selector">
+      <label class="form-label"><i class="bi bi-gear-wide-connected"></i> Machine</label>
+      <select class="form-select" [(ngModel)]="selectedMachineId">
+        <option [ngValue]="null">Toutes les machines</option>
+        <option *ngFor="let m of machines" [ngValue]="m.id">{{ m.name }}</option>
+      </select>
+    </div>
+
+    <!-- Sélecteur de mode de réponse -->
+    <div class="machine-selector">
+      <label class="form-label"><i class="bi bi-sliders"></i> Mode de réponse</label>
+      <select class="form-select" [(ngModel)]="selectedMode">
+        <option [ngValue]="null">Général</option>
+        <option *ngFor="let mode of responseModes" [ngValue]="mode.value">{{ mode.label }}</option>
+      </select>
+    </div>
+
+    <!-- Context indicator -->
+    <div class="advisor-context" *ngIf="selectedMachineId || selectedMode">
+      <div class="advisor-label">Répondant en tant que :</div>
+      <div class="advisor-value">
+        <i class="bi bi-cpu"></i> {{ selectedMachineName }}
+        <span class="advisor-sep">—</span>
+        <i class="bi bi-sliders"></i> {{ selectedModeName }}
+      </div>
+    </div>
+
+    <!-- Questions rapides -->
+    <div class="quick-questions">
+      <div class="qqs-label">Questions rapides</div>
+      <button
+        *ngFor="let q of quickQuestions"
+        class="quick-q-btn"
+        (click)="useQuickQuestion(q)"
+        [disabled]="loading">
+        <i class="bi bi-chevron-right"></i>
+        {{ q }}
+      </button>
+    </div>
+
+    <!-- Actions -->
+    <div class="sidebar-actions">
+      <button class="btn-gmao outline" (click)="clearChat()" style="width:100%">
+        <i class="bi bi-trash3-fill"></i> Effacer la discussion
+      </button>
+    </div>
+  </div>
+
+  <!-- Zone principale du chat -->
+  <div class="chat-main">
+    <div class="chat-header">
+      <h2><i class="bi bi-robot"></i> Chat IA GMAO</h2>
+      <div class="header-badges">
+        <span class="context-badge">
+          <i class="bi" [class.bi-gear-fill]="selectedMachineId" [class.bi-globe]="!selectedMachineId"></i>
+          {{ selectedMachineName }}
+        </span>
+        <span class="context-badge mode-badge" *ngIf="selectedMode">
+          <i class="bi bi-sliders"></i> {{ selectedModeName }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-body" #chatBody>
+      <div *ngFor="let msg of messages" class="message-wrapper" [class.user]="msg.role === 'user'" [class.ai]="msg.role === 'ai'">
+        <!-- Avatar IA -->
+        <div class="msg-avatar" *ngIf="msg.role === 'ai'">
+          <i class="bi bi-robot"></i>
+        </div>
+
+        <!-- Bulle -->
+        <div class="msg-bubble" [class.user-bubble]="msg.role === 'user'" [class.ai-bubble]="msg.role === 'ai'"
+          [class.severity-warning]="msg.role === 'ai' && msg.severity === 'WARNING'"
+          [class.severity-critical]="msg.role === 'ai' && msg.severity === 'CRITICAL'">
+
+          <!-- Indicateur de sévérité -->
+          <div class="severity-badge" *ngIf="msg.role === 'ai' && msg.severity && msg.severity !== 'INFO'">
+            <i class="bi bi-exclamation-triangle-fill" *ngIf="msg.severity === 'CRITICAL'"></i>
+            <i class="bi bi-exclamation-circle-fill" *ngIf="msg.severity === 'WARNING'"></i>
+            {{ msg.severity }}
+          </div>
+
+          <div class="msg-content" [innerHTML]="msg.content | messageFormat"></div>
+          <div class="msg-time">{{ msg.timestamp | date:'HH:mm' }}</div>
+        </div>
+
+        <!-- Avatar utilisateur -->
+        <div class="msg-avatar user-av" *ngIf="msg.role === 'user'">
+          <i class="bi bi-person-fill"></i>
+        </div>
+      </div>
+
+      <!-- Indicateur de saisie -->
+      <div class="message-wrapper ai" *ngIf="loading">
+        <div class="msg-avatar"><i class="bi bi-robot"></i></div>
+        <div class="msg-bubble ai-bubble typing-indicator">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zone de saisie -->
+    <div class="chat-input-area">
+      <div class="input-wrapper">
+        <textarea
+          [(ngModel)]="userInput"
+          (keydown)="onKeyDown($event)"
+          [disabled]="loading"
+          placeholder="Posez des questions sur l'état des machines, les calendriers de maintenance ou les prédictions de pannes..."
+          class="chat-input"
+          rows="1">
+        </textarea>
+        <button class="send-btn" (click)="sendMessage()" [disabled]="!userInput.trim() || loading">
+          <i class="bi bi-send-fill" *ngIf="!loading"></i>
+          <span class="spinner-circle" *ngIf="loading"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,177 @@
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-people-fill"></i> Gestion des utilisateurs</h1>
+    <p>Gérez les utilisateurs du système, les rôles et les permissions</p>
+  </div>
+  <button class="btn-gmao primary" (click)="openCreate()">
+    <i class="bi bi-person-plus-fill"></i> Ajouter un utilisateur
+  </button>
+</div>
+
+<!-- Alertes -->
+<div class="alert-gmao success" *ngIf="success">
+  <i class="bi bi-check-circle-fill"></i> {{ success }}
+</div>
+<div class="alert-gmao danger" *ngIf="error">
+  <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+</div>
+
+<!-- Filtres -->
+<div class="gmao-card filters-card">
+  <div class="filters-row">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="text" [(ngModel)]="searchTerm" placeholder="Rechercher par nom ou email..." class="form-control">
+    </div>
+    <select [(ngModel)]="filterRole" class="form-select role-filter">
+      <option value="">Tous les rôles</option>
+      <option *ngFor="let r of roles" [value]="r">{{ roleLabels[r] || r }}</option>
+    </select>
+    <span class="result-count">{{ filteredUsers.length }} utilisateurs</span>
+  </div>
+</div>
+
+<!-- Chargement -->
+<div class="loading-state" *ngIf="loading">
+  <div class="loading-spinner"></div>
+</div>
+
+<!-- Tableau -->
+<div class="gmao-card table-card" *ngIf="!loading">
+  <div class="table-responsive">
+    <table class="gmao-table">
+      <thead>
+      <tr>
+        <th>UUID</th>
+        <th>Utilisateur</th>
+        <th>Email</th>
+        <th>Rôle</th>
+        <th>CIN</th>
+        <th>Adresse</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let user of filteredUsers; let i = index" class="slide-in">
+        <td><span class="uuid-badge" title="{{ user.uuid }}">{{ (user.uuid || '').substring(0, 8) }}...</span></td>
+        <td>
+          <div class="user-cell">
+            <div class="user-avatar-sm">
+              <span>{{ user.name.charAt(0) }}</span>
+            </div>
+            <span>{{ user.name }}</span>
+          </div>
+        </td>
+        <td>{{ user.email }}</td>
+        <td>
+            <span class="role-badge" [class]="getRoleBadge(user.role)">
+              <i class="bi" [class]="getRoleIcon(user.role)"></i>
+              {{ getRoleLabel(user.role) }}
+            </span>
+        </td>
+        <td>{{ user.cin || '—' }}</td>
+        <td>{{ getFullAddress(user) }}</td>
+        <td>
+          <div class="action-btns">
+            <button class="btn-icon edit" (click)="openEdit(user)" title="Modifier">
+              <i class="bi bi-pencil-fill"></i>
+            </button>
+            <button *ngIf="!isSelf(user)" class="btn-icon delete" (click)="delete(user)" title="Supprimer">
+              <i class="bi bi-trash-fill"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+      <tr *ngIf="filteredUsers.length === 0">
+        <td colspan="7" class="text-center empty-row">
+          <i class="bi bi-inbox"></i> Aucun utilisateur trouvé
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-backdrop-dark" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-gmao" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ editingUser ? 'Modifier l\'utilisateur' : 'Créer un nouvel utilisateur' }}</h3>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+
+    <div class="alert-gmao danger" *ngIf="error">
+      <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+    </div>
+
+    <form [formGroup]="userForm" (ngSubmit)="save()">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label">Nom complet *</label>
+          <input type="text" formControlName="name" class="form-control" placeholder="Entrez le nom complet" [readonly]="isEditingRole">
+          <div class="text-danger mt-1" *ngIf="userForm.get('name')?.touched && userForm.get('name')?.invalid">
+            Le nom est requis
+          </div>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Adresse email *</label>
+          <input type="email" formControlName="email" class="form-control" placeholder="email@entreprise.com" [readonly]="isEditingRole">
+          <div class="text-danger mt-1" *ngIf="userForm.get('email')?.touched && userForm.get('email')?.invalid">
+            <span *ngIf="userForm.get('email')?.errors?.['required']">L'email est requis</span>
+            <span *ngIf="userForm.get('email')?.errors?.['email']">L'email doit contenir &#64; et être valide</span>
+          </div>
+        </div>
+
+        <div class="col-12" *ngIf="!editingUser">
+          <label class="form-label">Mot de passe *</label>
+          <input type="password" formControlName="password" class="form-control" placeholder="Mot de passe temporaire">
+          <div class="text-danger mt-1" *ngIf="userForm.get('password')?.touched && userForm.get('password')?.invalid">
+            <span *ngIf="userForm.get('password')?.errors?.['required']">Le mot de passe est requis</span>
+            <span *ngIf="userForm.get('password')?.errors?.['minlength']">Le mot de passe doit comporter au moins 6 caractères</span>
+            <span *ngIf="userForm.get('password')?.errors?.['passwordInvalid']">Le mot de passe doit contenir au moins une lettre et un chiffre</span>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Rôle *</label>
+          <select formControlName="role" class="form-select">
+            <option *ngFor="let r of roles" [value]="r">{{ roleLabels[r] || r }}</option>
+          </select>
+          <small class="input-hint-text" *ngIf="isEditingRole">
+            <i class="bi bi-info-circle"></i>
+            Les autres champs sont en lecture seule pendant la modification du rôle.
+          </small>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">CIN *</label>
+          <input type="text" formControlName="cin" class="form-control"
+                 placeholder="CIN" maxlength="8"
+                 [readonly]="isEditingRole"
+                 (keypress)="preventNonNumeric($event)">
+          <div class="text-danger mt-1" *ngIf="userForm.get('cin')?.touched && userForm.get('cin')?.invalid">
+            <span *ngIf="userForm.get('cin')?.errors?.['required']">
+              Le CIN est requis
+            </span>
+            <span *ngIf="userForm.get('cin')?.errors?.['invalidCin']">
+              Le CIN doit comporter exactement 8 chiffres
+            </span>
+            <span *ngIf="userForm.get('cin')?.errors?.['duplicateCin']">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              Ce CIN existe déjà. Veuillez en choisir un autre.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-gmao outline" (click)="closeModal()">Annuler</button>
+        <button type="submit" class="btn-gmao primary" [disabled]="saving || userForm.invalid">
+          <span *ngIf="!saving"><i class="bi bi-save-fill"></i> {{ editingUser ? 'Modifier' : 'Créer' }}</span>
+          <span *ngIf="saving"><span class="spinner-sm"></span> Enregistrement...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

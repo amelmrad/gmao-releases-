@@ -1,0 +1,6 @@
+<div class="app-wrapper" [class.with-sidebar]="isLoggedIn">
+  <app-navbar *ngIf="isLoggedIn"></app-navbar>
+  <main class="main-content" [class.with-nav]="isLoggedIn">
+    <router-outlet></router-outlet>
+  </main>
+</div>

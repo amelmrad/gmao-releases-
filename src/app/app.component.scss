@@ -1,0 +1,24 @@
+.app-wrapper {
+  min-height: 100vh;
+
+  &.with-sidebar {
+    display: flex;
+  }
+}
+
+.main-content {
+  flex: 1;
+  min-height: 100vh;
+  background: transparent;
+
+  &.with-nav {
+    margin-left: 260px;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content.with-nav {
+    margin-left: 0;
+  }
+}

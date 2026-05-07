@@ -1,0 +1,56 @@
+<div class="login-wrapper">
+  <div class="login-bg">
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+  </div>
+
+  <div class="login-card slide-in">
+    <div class="login-header">
+      <div class="login-logo">
+        <i class="bi bi-shield-lock-fill"></i>
+      </div>
+      <h1>Vérification 2FA</h1>
+      <p>Entrez le code à 6 chiffres de votre application d'authentification</p>
+    </div>
+
+    <div class="alert-gmao danger" *ngIf="error">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      {{ error }}
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label class="form-label">Code de vérification</label>
+        <div class="input-wrapper">
+          <i class="bi bi-key-fill input-icon"></i>
+          <input
+            type="text"
+            formControlName="code"
+            class="form-control"
+            placeholder="000000"
+            maxlength="6"
+            autocomplete="one-time-code"
+            [class.is-invalid]="form.get('code')?.touched && form.get('code')?.invalid" />
+        </div>
+        <div class="invalid-msg" *ngIf="form.get('code')?.touched && form.get('code')?.invalid">
+          Veuillez entrer un code valide à 6 chiffres
+        </div>
+      </div>
+
+      <button type="submit" class="btn-login" [disabled]="loading || form.invalid">
+        <span *ngIf="!loading">
+          <i class="bi bi-check-circle-fill"></i> Vérifier
+        </span>
+        <span *ngIf="loading">
+          <span class="spinner"></span> Vérification...
+        </span>
+      </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 12px;">
+      <a (click)="backToLogin()" style="color: #ca25b6; text-decoration: none; font-size: 0.9rem; cursor: pointer;">
+        <i class="bi bi-arrow-left"></i> Retour à la connexion
+      </a>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,79 @@
+<div class="login-wrapper">
+  <!-- Arrière-plan -->
+  <div class="login-bg">
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+  </div>
+
+  <!-- Carte -->
+  <div class="login-card slide-in">
+    <!-- En-tête -->
+    <div class="login-header">
+      <div class="login-logo">
+        <i class="bi bi-gear-wide-connected"></i>
+      </div>
+      <h1>Système GMAO</h1>
+      <p>Gestion intelligente de la maintenance</p>
+    </div>
+
+    <!-- Erreur -->
+    <div class="alert-gmao danger" *ngIf="error">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      {{ error }}
+    </div>
+
+    <!-- Formulaire -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="form-group">
+        <label class="form-label">Adresse email</label>
+        <div class="input-wrapper">
+          <i class="bi bi-envelope-fill input-icon"></i>
+          <input
+            type="email"
+            formControlName="email"
+            class="form-control"
+            placeholder="votre@gmao.com"
+            [class.is-invalid]="loginForm.get('email')?.touched && loginForm.get('email')?.invalid" />
+        </div>
+        <div class="invalid-msg" *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.hasError('required')">
+          L'adresse email est obligatoire
+        </div>
+        <div class="invalid-msg" *ngIf="loginForm.get('email')?.touched && !loginForm.get('email')?.hasError('required') && loginForm.get('email')?.invalid">
+          L'adresse email doit être au format *&#64;gmao.com
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Mot de passe</label>
+        <div class="input-wrapper">
+          <i class="bi bi-lock-fill input-icon"></i>
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            formControlName="password"
+            class="form-control"
+            placeholder="••••••••"
+            [class.is-invalid]="loginForm.get('password')?.touched && loginForm.get('password')?.invalid" />
+          <button type="button" class="toggle-pass" (click)="showPassword = !showPassword">
+            <i class="bi" [class.bi-eye]="!showPassword" [class.bi-eye-slash]="showPassword"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-login" [disabled]="loading || loginForm.invalid">
+        <span *ngIf="!loading">
+          <i class="bi bi-box-arrow-in-right"></i> Se connecter
+        </span>
+        <span *ngIf="loading">
+          <span class="spinner"></span> Authentification...
+        </span>
+      </button>
+    </form>
+
+    <!-- Mot de passe oublié -->
+    <div style="text-align: center; margin-top: 12px;">
+      <a routerLink="/reset-password" style="color: #ca25b6; text-decoration: none; font-size: 0.9rem;">
+        <i class="bi bi-key-fill"></i> Mot de passe oublié ?
+      </a>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,116 @@
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-bar-chart-line-fill"></i> Rapports système</h1>
+    <p>Analyses, métriques et aperçu des performances</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn-gmao outline" (click)="loadReport()">
+      <i class="bi bi-arrow-clockwise"></i> Actualiser
+    </button>
+    <button class="btn-gmao primary" (click)="exportPDF()" *ngIf="report" [disabled]="downloading">
+      <span *ngIf="!downloading"><i class="bi bi-file-earmark-pdf-fill"></i> Télécharger PDF</span>
+      <span *ngIf="downloading"><span class="spinner-sm"></span> Génération du PDF...</span>
+    </button>
+  </div>
+</div>
+
+<div class="loading-state" *ngIf="loading"><div class="loading-spinner"></div></div>
+
+<div *ngIf="!loading && report" id="report-content">
+  <!-- Cartes KPI -->
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-icon"><i class="bi bi-gear-wide-connected"></i></div>
+      <div class="kpi-value">{{ report.stats.totalMachines }}</div>
+      <div class="kpi-label">Machines totales</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-icon"><i class="bi bi-tools"></i></div>
+      <div class="kpi-value">{{ report.stats.totalTasks }}</div>
+      <div class="kpi-label">Tâches totales</div>
+    </div>
+  </div>
+
+  <!-- Cartes de taux -->
+  <div class="rate-grid">
+    <div class="gmao-card rate-card">
+      <h3><i class="bi bi-graph-up-arrow"></i> Taux d'achèvement des tâches</h3>
+      <div class="rate-value green">{{ taskCompletionRate }}%</div>
+      <div class="progress-gmao">
+        <div class="progress-fill success" [style.width.%]="taskCompletionRate"></div>
+      </div>
+      <p>{{ report.stats.completedTasks }} sur {{ report.stats.totalTasks }} tâches terminées</p>
+    </div>
+    <div class="gmao-card rate-card">
+      <h3><i class="bi bi-heart-pulse-fill"></i> Taux de santé des machines</h3>
+      <div class="rate-value blue">{{ machineHealthRate }}%</div>
+      <div class="progress-gmao">
+        <div class="progress-fill" [style.width.%]="machineHealthRate"></div>
+      </div>
+      <p>{{ report.stats.operationalMachines }} sur {{ report.stats.totalMachines }} machines opérationnelles</p>
+    </div>
+  </div>
+
+  <!-- Graphiques -->
+  <div class="charts-row">
+    <div class="gmao-card">
+      <h3 class="chart-title"><i class="bi bi-pie-chart-fill"></i> Répartition des tâches</h3>
+      <div class="chart-wrap"><canvas #completionChart></canvas></div>
+    </div>
+    <div class="gmao-card">
+      <h3 class="chart-title"><i class="bi bi-pie-chart-fill"></i> Santé des machines</h3>
+      <div class="chart-wrap"><canvas #machineHealthChart></canvas></div>
+    </div>
+  </div>
+
+  <!-- Tableau récapitulatif des statistiques -->
+  <div class="gmao-card">
+    <h3 class="chart-title"><i class="bi bi-table"></i> Statistiques détaillées</h3>
+    <table class="gmao-table">
+      <thead>
+      <tr>
+        <th>Métrique</th>
+        <th>Valeur</th>
+        <th>Statut</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td><i class="bi bi-gear-fill"></i> Machines opérationnelles</td>
+        <td><strong>{{ report.stats.operationalMachines }}</strong></td>
+        <td><span class="badge-status operational">BON</span></td>
+      </tr>
+      <tr>
+        <td><i class="bi bi-tools"></i> Machines en maintenance</td>
+        <td><strong>{{ report.stats.maintenanceMachines }}</strong></td>
+        <td><span class="badge-status maintenance">MAINTENANCE</span></td>
+      </tr>
+      <tr>
+        <td><i class="bi bi-x-circle-fill"></i> Machines en panne</td>
+        <td><strong>{{ report.stats.brokenMachines }}</strong></td>
+        <td><span class="badge-status broken">CRITIQUE</span></td>
+      </tr>
+      <tr>
+        <td><i class="bi bi-dash-circle-fill"></i> Machines inactives</td>
+        <td><strong>{{ report.stats.idleMachines }}</strong></td>
+        <td><span class="badge-status" style="background: rgba(158,158,158,0.2); color: #9e9e9e;">INACTIVE</span></td>
+      </tr>
+      <tr>
+        <td><i class="bi bi-hourglass-split"></i> Tâches en attente</td>
+        <td><strong>{{ report.stats.pendingTasks }}</strong></td>
+        <td><span class="badge-status pending">EN ATTENTE</span></td>
+      </tr>
+      <tr>
+        <td><i class="bi bi-arrow-repeat"></i> Tâches en cours</td>
+        <td><strong>{{ report.stats.inProgressTasks }}</strong></td>
+        <td><span class="badge-status in-progress">EN COURS</span></td>
+      </tr>
+      <tr>
+        <td><i class="bi bi-check-circle-fill"></i> Tâches terminées</td>
+        <td><strong>{{ report.stats.completedTasks }}</strong></td>
+        <td><span class="badge-status completed">TERMINÉ</span></td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

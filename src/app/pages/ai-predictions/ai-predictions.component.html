@@ -1,0 +1,131 @@
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-lightning-fill"></i> Prédictions IA</h1>
+    <p>Prédictions de pannes et évaluation des risques basées sur l'apprentissage automatique</p>
+  </div>
+  <button class="btn-gmao primary" (click)="loadPredictions()">
+    <i class="bi bi-arrow-clockwise"></i> Actualiser l'analyse
+  </button>
+</div>
+
+<!-- Alertes récapitulatives -->
+<div class="alert-gmao danger" *ngIf="criticalCount > 0">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <strong>{{ criticalCount }} machine(s)</strong> sont dans un état CRITIQUE et nécessitent une attention immédiate !
+</div>
+<div class="alert-gmao warning" *ngIf="highCount > 0 && criticalCount === 0">
+  <i class="bi bi-exclamation-circle-fill"></i>
+  <strong>{{ highCount }} machine(s)</strong> sont à risque ÉLEVÉ — planifiez une maintenance dans les 48 heures.
+</div>
+<div class="alert-gmao success" *ngIf="criticalCount === 0 && highCount === 0 && predictions.length > 0">
+  <i class="bi bi-shield-check-fill"></i>
+  Toutes les machines sont dans des paramètres acceptables !
+</div>
+
+<!-- Chargement -->
+<div class="loading-state" *ngIf="loading"><div class="loading-spinner"></div><p>L'IA analyse les données des machines...</p></div>
+
+<div *ngIf="!loading && predictions.length > 0">
+  <!-- Graphique des risques -->
+  <div class="gmao-card chart-card">
+    <h3 class="chart-title"><i class="bi bi-bar-chart-fill"></i> Aperçu des scores de risque (Toutes les machines)</h3>
+    <div class="chart-container">
+      <canvas #riskChart></canvas>
+    </div>
+  </div>
+
+  <!-- Filtre -->
+  <div class="gmao-card filter-card">
+    <div class="filter-row">
+      <span class="filter-label">Filtrer par niveau de risque :</span>
+      <button class="filter-btn" [class.active]="filterLevel === ''" (click)="filterLevel = ''">Tous ({{ predictions.length }})</button>
+      <button class="filter-btn critical" [class.active]="filterLevel === 'CRITICAL'" (click)="filterLevel = 'CRITICAL'">
+        Critique ({{ criticalCount }})
+      </button>
+      <button class="filter-btn high" [class.active]="filterLevel === 'HIGH'" (click)="filterLevel = 'HIGH'">
+        Élevé ({{ highCount }})
+      </button>
+      <button class="filter-btn medium" [class.active]="filterLevel === 'MEDIUM'" (click)="filterLevel = 'MEDIUM'">
+        Moyen
+      </button>
+      <button class="filter-btn low" [class.active]="filterLevel === 'LOW'" (click)="filterLevel = 'LOW'">
+        Faible
+      </button>
+    </div>
+  </div>
+
+  <!-- Cartes de prédiction -->
+  <div class="predictions-grid">
+    <div
+      class="prediction-card"
+      *ngFor="let pred of filteredPredictions"
+      [class]="'risk-' + getRiskClass(pred.riskLevel)"
+      (click)="selectPrediction(pred)"
+      [class.expanded]="selectedPrediction?.machineId === pred.machineId">
+
+      <!-- En-tête de carte -->
+      <div class="pred-header">
+        <div class="pred-machine-icon"><i class="bi bi-gear-wide-connected"></i></div>
+        <div class="pred-info">
+          <h4>{{ pred.machineName }}</h4>
+          <span class="pred-location"><i class="bi bi-geo-alt-fill"></i> {{ pred.machineLocation || 'N/A' }}</span>
+        </div>
+        <span class="risk-badge" [class]="getRiskClass(pred.riskLevel)">{{ getRiskLabel(pred.riskLevel) }}</span>
+      </div>
+
+      <!-- Barre de score de risque -->
+      <div class="pred-score-row">
+        <span class="score-label">Score de risque</span>
+        <span class="score-value" [class]="'risk-score ' + getRiskClass(pred.riskLevel)">{{ pred.riskScore | number:'1.0-1' }}/100</span>
+      </div>
+      <div class="risk-bar">
+        <div class="risk-fill" [style.width.%]="getRiskBarWidth(pred.riskScore)" [style.background]="getRiskBarColor(pred.riskScore)"></div>
+      </div>
+
+      <!-- Mini télémétrie -->
+      <div class="telemetry-mini" *ngIf="pred.temperature || pred.vibration || pred.runtime">
+        <div class="telem-item" *ngIf="pred.temperature">
+          <i class="bi bi-thermometer-half"></i>
+          <span>{{ pred.temperature }}°C</span>
+        </div>
+        <div class="telem-item" *ngIf="pred.vibration">
+          <i class="bi bi-soundwave"></i>
+          <span>{{ pred.vibration }} mm/s</span>
+        </div>
+        <div class="telem-item" *ngIf="pred.runtime">
+          <i class="bi bi-clock-fill"></i>
+          <span>{{ pred.runtime }}h</span>
+        </div>
+      </div>
+
+      <!-- Détails développés -->
+      <div class="pred-details" *ngIf="selectedPrediction?.machineId === pred.machineId">
+        <div class="details-section">
+          <h5><i class="bi bi-exclamation-triangle-fill"></i> Alertes</h5>
+          <ul>
+            <li *ngFor="let alert of pred.alerts">{{ alert }}</li>
+          </ul>
+        </div>
+        <div class="details-section">
+          <h5><i class="bi bi-lightbulb-fill"></i> Recommandations</h5>
+          <ul>
+            <li *ngFor="let rec of pred.recommendations">{{ rec }}</li>
+          </ul>
+        </div>
+        <div class="details-footer">
+          <i class="bi bi-clock"></i> Analysé : {{ pred.analyzedAt | date:'d MMM, HH:mm' }}
+        </div>
+      </div>
+
+      <div class="expand-hint">
+        <i class="bi" [class.bi-chevron-down]="selectedPrediction?.machineId !== pred.machineId" [class.bi-chevron-up]="selectedPrediction?.machineId === pred.machineId"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="empty-predictions" *ngIf="!loading && predictions.length === 0">
+  <i class="bi bi-robot"></i>
+  <h3>Aucune donnée de prédiction</h3>
+  <p>Ajoutez des données télémétriques aux machines pour activer les prédictions IA</p>
+</div>

@@ -1,0 +1,401 @@
+$brand-sage:    #a4c494;
+$brand-magenta: #ca25b6;
+$brand-grey:    #828794;
+$brand-navy:    $brand-sage;    // back-compat alias
+$brand-cyan:    $brand-magenta; // back-compat alias
+$brand-gradient: linear-gradient(90deg, #a4c494, #ca25b6, #828794);
+
+// ====================
+// Sidebar (theme-aware — brand gradient in light, muted gradient in dark)
+// ====================
+.sidebar {
+  width: 260px;
+  min-height: 100vh;
+  background: var(--bg-sidebar);
+  box-shadow: 2px 0 14px rgba(130, 135, 148, 0.18);
+  border-right: 1px solid var(--sidebar-border);
+  color: var(--sidebar-text);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  transition: width 0.3s ease, background 0.3s ease;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: $brand-gradient;
+    z-index: 1;
+  }
+
+  &.collapsed {
+    width: 72px;
+    .brand-icon { margin: 0 auto; }
+    .sidebar-brand { justify-content: center; padding: 16px 10px; }
+    .sidebar-user { display: none; }
+    .nav-item { justify-content: center; padding: 14px 10px; }
+    .sidebar-footer { padding: 12px; }
+    .logout-btn { justify-content: center; }
+    .theme-toggle-btn { justify-content: center; }
+    .theme-toggle-btn .theme-label { display: none; }
+    .nav-section-label { display: none; }
+    .nav-badge { display: none; }
+  }
+}
+
+// ====================
+// Brand
+// ====================
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 16px;
+  border-bottom: 1px solid var(--sidebar-border);
+  position: relative;
+
+  .brand-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.20);
+    border: 1px solid rgba(255, 255, 255, 0.30);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #ffffff;
+    flex-shrink: 0;
+  }
+
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+
+    .brand-name { font-size: 1.1rem; font-weight: 700; color: var(--sidebar-text); letter-spacing: 1px; }
+    .brand-sub  { font-size: 0.65rem; color: var(--sidebar-text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  }
+
+  .collapse-btn {
+    background: none;
+    border: none;
+    color: var(--sidebar-text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    position: absolute;
+    right: 12px;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+
+    &:hover { color: #ffffff; background: var(--sidebar-hover-bg); }
+  }
+}
+
+// ====================
+// User
+// ====================
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  margin: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  border: 1px solid var(--sidebar-border);
+
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    flex-shrink: 0;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+  }
+
+  .user-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    .user-name { font-size: 0.875rem; font-weight: 600; color: var(--sidebar-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .user-role {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-top: 2px;
+      width: fit-content;
+      background: rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.30);
+    }
+  }
+}
+
+// ====================
+// Navigation
+// ====================
+.sidebar-nav {
+  flex: 1;
+  padding: 12px 8px;
+  overflow-y: auto;
+
+  .nav-section-label { font-size: 0.65rem; font-weight: 700; color: var(--sidebar-text-muted); text-transform: uppercase; letter-spacing: 1px; padding: 8px 12px 6px; }
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  color: var(--sidebar-text-muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin-bottom: 2px;
+  position: relative;
+
+  i { font-size: 1.1rem; flex-shrink: 0; width: 20px; text-align: center; }
+  .nav-label { flex: 1; }
+
+  .nav-badge {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+  }
+
+  &:hover { background: var(--sidebar-hover-bg); color: #ffffff; }
+
+  &.active {
+    background: var(--sidebar-active-bg);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.30);
+    font-weight: 600;
+
+    &::before { content: ''; position: absolute; left: 0; top: 20%; bottom: 20%; width: 3px; background: #ffffff; border-radius: 0 2px 2px 0; }
+  }
+}
+
+// ====================
+// Footer
+// ====================
+.sidebar-footer {
+  padding: 12px 8px;
+  border-top: 1px solid var(--sidebar-border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 14px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: var(--sidebar-text-muted);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    i { font-size: 1.1rem; }
+
+    &:hover { background: rgba(231, 76, 60, 0.18); color: #ffffff; border-color: rgba(231, 76, 60, 0.45); }
+  }
+}
+
+// ====================
+// Theme toggle (light / dark)
+// ====================
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  color: var(--sidebar-text);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+
+  .theme-icon { font-size: 1.1rem; line-height: 1; }
+  .theme-label { flex: 1; text-align: left; }
+
+  /* Only one icon visible at a time, based on active theme */
+  .theme-icon--light { display: inline; }
+  .theme-icon--dark  { display: none; }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.40);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.10);
+  }
+}
+
+[data-theme="dark"] .theme-toggle-btn {
+  .theme-icon--light { display: none; }
+  .theme-icon--dark  { display: inline; }
+}
+
+// ====================
+// Maintenance Alert Bell
+// ====================
+.alert-bell-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin: 0 8px 4px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+  z-index: 1100;
+
+  .alert-bell-btn {
+    position: relative;
+    background: none;
+    border: none;
+    color: #fff4d6;
+    font-size: 1rem;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+
+    &.has-overdue { color: #ffd0cc; }
+
+    .alert-badge {
+      position: absolute;
+      top: -6px;
+      right: -8px;
+      background: $brand-magenta;
+      color: #ffffff;
+      font-size: 0.6rem;
+      font-weight: 700;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .alert-bell-label { font-size: 0.72rem; color: #ffffff; font-weight: 500; }
+
+  .alert-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 280px;
+    background: var(--bg-card);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    z-index: 2000;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.2s ease-in-out;
+
+    &.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .alert-dropdown-header {
+      padding: 10px 14px;
+      background: rgba($brand-magenta, 0.10);
+      color: $brand-magenta;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .alert-dropdown-item {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--color-border);
+      &:last-child { border-bottom: none; }
+
+      &.overdue { background: rgba(231, 76, 60, 0.08); }
+
+      .alert-item-name {
+        font-size: 0.82rem;
+        color: var(--color-text-primary);
+        font-weight: 500;
+        margin-bottom: 3px;
+        display: flex;
+        justify-content: space-between;
+
+        i { color: var(--color-text-secondary); margin-right: 4px; }
+      }
+
+      .alert-item-date {
+        font-size: 0.72rem;
+        color: var(--color-text-secondary);
+
+        .overdue-badge {
+          background: rgba(231, 76, 60, 0.2);
+          color: #e74c3c;
+          border-radius: 4px;
+          padding: 1px 5px;
+          font-size: 0.65rem;
+          font-weight: 700;
+          margin-right: 4px;
+        }
+      }
+    }
+  }
+
+  &:hover .alert-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+}
+
+// ====================
+// Priority badges
+// ====================
+.priority-badge { display: inline-block; padding: 2px 6px; margin-left: 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+.priority-high { background-color: #ff4d4f; color: #fff; }
+.priority-medium { background-color: #faad14; color: #fff; }
+.priority-low { background-color: #52c41a; color: #fff; }

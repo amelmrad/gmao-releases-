@@ -1,0 +1,301 @@
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-gear-fill"></i> Paramètres</h1>
+    <p>Gérez votre profil, vos identifiants et vos préférences</p>
+  </div>
+</div>
+
+<div class="alert-gmao success" *ngIf="success"><i class="bi bi-check-circle-fill"></i> {{ success }}</div>
+<div class="alert-gmao danger" *ngIf="error"><i class="bi bi-exclamation-triangle-fill"></i> {{ error }}</div>
+
+<div class="settings-layout">
+  <!-- Carte de profil -->
+  <div class="profile-card gmao-card">
+    <div class="profile-avatar-wrap">
+      <div class="profile-avatar">
+        <span>{{ avatarInitial }}</span>
+      </div>
+    </div>
+    <h3 class="profile-name">{{ currentUser?.name }}</h3>
+    <p class="profile-email">{{ currentUser?.email }}</p>
+    <span class="profile-role-badge">{{ getRoleLabel() }}</span>
+
+    <div class="profile-stats">
+      <div class="ps-item">
+        <span class="ps-icon"><i class="bi bi-envelope-fill"></i></span>
+        <span class="ps-text">{{ currentUser?.email }}</span>
+      </div>
+      <div class="ps-item">
+        <span class="ps-icon"><i class="bi bi-shield-fill"></i></span>
+        <span class="ps-text">{{ getRoleLabel() }}</span>
+      </div>
+      <div class="ps-item">
+        <span class="ps-icon"><i class="bi bi-fingerprint"></i></span>
+        <span class="ps-text" style="font-size: 0.75rem;">{{ currentUser?.uuid }}</span>
+      </div>
+      <div class="ps-item" *ngIf="twoFAEnabled">
+        <span class="ps-icon"><i class="bi bi-shield-lock-fill" style="color:#a4c494"></i></span>
+        <span class="ps-text" style="color:#a4c494">2FA Active</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panneau des paramètres -->
+  <div class="settings-panel">
+    <!-- Onglets -->
+    <div class="tabs-row">
+      <button class="tab-btn" [class.active]="activeTab === 'profile'" (click)="activeTab = 'profile'">
+        <i class="bi bi-person-fill"></i> Infos profil
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'security'" (click)="activeTab = 'security'">
+        <i class="bi bi-lock-fill"></i> Sécurité
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === '2fa'" (click)="activeTab = '2fa'">
+        <i class="bi bi-shield-lock-fill"></i> Authentification à deux facteurs
+        <span class="tab-badge" *ngIf="twoFAEnabled" style="background:#a4c494">ACTIF</span>
+      </button>
+    </div>
+
+    <!-- ===== ONGLET PROFIL ===== -->
+    <div class="tab-content" *ngIf="activeTab === 'profile'">
+      <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+        <div class="gmao-card">
+          <h3 class="section-title"><i class="bi bi-person-bounding-box"></i> Informations personnelles</h3>
+
+          <div class="security-info" *ngIf="isTechnician">
+            <i class="bi bi-info-circle-fill"></i>
+            En tant que Technicien, vous pouvez mettre à jour vos informations personnelles (adresse, ville, code postal).
+          </div>
+
+          <div class="row g-3">
+            <!-- Email -->
+            <div class="col-12">
+              <label class="form-label">Adresse email <span class="badge-readonly">Lecture seule</span></label>
+              <input type="email" [value]="currentUser?.email" class="form-control readonly-field"
+                     readonly disabled placeholder="votre@email.com">
+              <small class="input-hint-text">L'email ne peut pas être modifié. Contactez l'admin si nécessaire.</small>
+            </div>
+
+            <!-- Nom -->
+            <div class="col-12" *ngIf="isAdmin || isResponsable">
+              <label class="form-label">Nom complet</label>
+              <input type="text" formControlName="name" class="form-control" placeholder="Votre nom complet">
+            </div>
+
+            <!-- Adresse -->
+            <div class="col-12">
+              <label class="form-label">Adresse</label>
+              <input type="text" formControlName="address" class="form-control" placeholder="Numéro et rue">
+            </div>
+
+            <div class="col-6">
+              <label class="form-label">Ville</label>
+              <input type="text" formControlName="city" class="form-control" placeholder="Ville">
+            </div>
+
+            <div class="col-6">
+              <label class="form-label">Code postal</label>
+              <input type="text" formControlName="postalCode" class="form-control" placeholder="Ex: 1000" maxlength="5">
+            </div>
+
+            <!-- CIN -->
+            <div class="col-6" *ngIf="isAdmin">
+              <label class="form-label">CIN <span class="badge-admin-only">Admin</span></label>
+              <input type="text" formControlName="cin" class="form-control" placeholder="CIN">
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-gmao primary" [disabled]="saving">
+              <span *ngIf="!saving"><i class="bi bi-save-fill"></i> Enregistrer les modifications</span>
+              <span *ngIf="saving"><span class="spinner-sm"></span> Enregistrement...</span>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- ===== ONGLET SÉCURITÉ ===== -->
+    <div class="tab-content" *ngIf="activeTab === 'security'">
+      <form [formGroup]="passwordForm" (ngSubmit)="savePassword()">
+        <div class="gmao-card">
+          <h3 class="section-title"><i class="bi bi-key-fill"></i> Changer le mot de passe</h3>
+
+          <div class="security-info">
+            <i class="bi bi-info-circle-fill"></i>
+            Le mot de passe doit contenir au moins 6 caractères, avec au minimum une lettre et un chiffre.
+          </div>
+
+          <div class="row g-3" style="margin-top:8px">
+            <div class="col-12">
+              <label class="form-label">Mot de passe actuel</label>
+              <div class="input-pass-wrap">
+                <input [type]="showCurrentPass ? 'text' : 'password'"
+                       formControlName="currentPassword" class="form-control" placeholder="••••••••">
+                <button type="button" class="toggle-pass" (click)="showCurrentPass = !showCurrentPass">
+                  <i class="bi" [class.bi-eye]="!showCurrentPass" [class.bi-eye-slash]="showCurrentPass"></i>
+                </button>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Nouveau mot de passe</label>
+              <div class="input-pass-wrap">
+                <input [type]="showNewPass ? 'text' : 'password'"
+                       formControlName="newPassword" class="form-control" placeholder="••••••••">
+                <button type="button" class="toggle-pass" (click)="showNewPass = !showNewPass">
+                  <i class="bi" [class.bi-eye]="!showNewPass" [class.bi-eye-slash]="showNewPass"></i>
+                </button>
+              </div>
+              <div class="invalid-msg"
+                   *ngIf="passwordForm.get('newPassword')?.hasError('minlength') && passwordForm.get('newPassword')?.touched">
+                Le mot de passe doit contenir au moins 6 caractères
+              </div>
+              <div class="invalid-msg"
+                   *ngIf="passwordForm.get('newPassword')?.hasError('pattern') && !passwordForm.get('newPassword')?.hasError('minlength') && passwordForm.get('newPassword')?.touched">
+                Le mot de passe doit contenir au moins une lettre et un chiffre
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Confirmer le nouveau mot de passe</label>
+              <div class="input-pass-wrap">
+                <input [type]="showConfirmPass ? 'text' : 'password'"
+                       formControlName="confirmPassword" class="form-control" placeholder="••••••••">
+                <button type="button" class="toggle-pass" (click)="showConfirmPass = !showConfirmPass">
+                  <i class="bi" [class.bi-eye]="!showConfirmPass" [class.bi-eye-slash]="showConfirmPass"></i>
+                </button>
+              </div>
+              <div class="invalid-msg"
+                   *ngIf="passwordForm.errors?.['passwordMismatch'] && passwordForm.get('confirmPassword')?.touched">
+                Les mots de passe ne correspondent pas
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-gmao primary" [disabled]="saving || passwordForm.invalid">
+              <span *ngIf="!saving"><i class="bi bi-shield-lock-fill"></i> Mettre à jour le mot de passe</span>
+              <span *ngIf="saving"><span class="spinner-sm"></span> Mise à jour...</span>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Informations du compte -->
+      <div class="gmao-card">
+        <h3 class="section-title"><i class="bi bi-info-circle-fill"></i> Informations du compte</h3>
+        <div class="account-info-grid">
+          <div class="info-row">
+            <span class="info-label">Nom</span>
+            <span class="info-value">{{ currentUser?.name }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Email</span>
+            <span class="info-value">{{ currentUser?.email }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Rôle</span>
+            <span class="info-value">{{ getRoleLabel() }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">UUID</span>
+            <span class="info-value" style="font-size: 0.8rem;">{{ currentUser?.uuid }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Authentification à deux facteurs</span>
+            <span class="info-value" [style.color]="twoFAEnabled ? '#a4c494' : '#828794'">
+              {{ twoFAEnabled ? 'Activée' : 'Désactivée' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ONGLET 2FA ===== -->
+    <div class="tab-content" *ngIf="activeTab === '2fa'">
+      <div class="gmao-card">
+        <h3 class="section-title"><i class="bi bi-shield-lock-fill"></i> Authentification à deux facteurs</h3>
+
+        <div class="twofa-status" [class.enabled]="twoFAEnabled">
+          <div class="twofa-status-icon">
+            <i class="bi" [class.bi-shield-check-fill]="twoFAEnabled" [class.bi-shield-x]="!twoFAEnabled"></i>
+          </div>
+          <div class="twofa-status-text">
+            <strong>{{ twoFAEnabled ? '2FA est activée' : '2FA est désactivée' }}</strong>
+            <p>{{ twoFAEnabled
+              ? 'Votre compte est protégé par des mots de passe à usage unique basés sur le temps (TOTP).'
+              : 'Activez la 2FA pour ajouter une couche de sécurité supplémentaire à votre compte.' }}</p>
+          </div>
+        </div>
+
+        <div *ngIf="twoFAStep === 'idle'">
+          <button class="btn-gmao primary" (click)="setup2FA()" *ngIf="!twoFAEnabled" [disabled]="saving">
+            <span *ngIf="!saving"><i class="bi bi-shield-plus"></i> Activer l'authentification à deux facteurs</span>
+            <span *ngIf="saving"><span class="spinner-sm"></span> Configuration...</span>
+          </button>
+          <button class="btn-gmao danger-outline" (click)="startDisable2FA()" *ngIf="twoFAEnabled">
+            <i class="bi bi-shield-x"></i> Désactiver l'authentification à deux facteurs
+          </button>
+        </div>
+
+        <div *ngIf="twoFAStep === 'verify'" class="twofa-setup-panel">
+          <div class="security-info">
+            <i class="bi bi-info-circle-fill"></i>
+            Scannez le code QR ci-dessous avec votre application d'authentification (Google Authenticator, Authy, etc.),
+            puis entrez le code à 6 chiffres pour confirmer.
+          </div>
+
+          <div class="qr-wrap">
+            <img [src]="qrCodeImageUrl" alt="Code QR 2FA" class="qr-img">
+          </div>
+
+          <div class="secret-wrap">
+            <label class="form-label">Clé pour saisie manuelle</label>
+            <div class="secret-display">{{ twoFASecret }}</div>
+          </div>
+
+          <form [formGroup]="twoFACodeForm" (ngSubmit)="verify2FA()">
+            <label class="form-label" style="margin-top:16px">Entrez le code à 6 chiffres de l'authentificateur</label>
+            <div class="code-input-row">
+              <input type="text" formControlName="code" class="form-control code-input"
+                     placeholder="000000" maxlength="6" autocomplete="one-time-code">
+              <button type="submit" class="btn-gmao primary" [disabled]="saving || twoFACodeForm.invalid">
+                <i class="bi bi-check-circle-fill"></i> Vérifier et activer
+              </button>
+            </div>
+            <div class="invalid-msg"
+                 *ngIf="twoFACodeForm.get('code')?.invalid && twoFACodeForm.get('code')?.touched">
+              Veuillez entrer un code valide à 6 chiffres
+            </div>
+          </form>
+
+          <button class="btn-gmao outline" (click)="cancelTwoFA()" style="margin-top:12px">
+            Annuler
+          </button>
+        </div>
+
+        <div *ngIf="twoFAStep === 'disable'" class="twofa-setup-panel">
+          <div class="security-info warning">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Entrez le code à 6 chiffres actuel de votre application d'authentification pour confirmer la désactivation de la 2FA.
+          </div>
+
+          <form [formGroup]="twoFACodeForm" (ngSubmit)="disable2FA()">
+            <label class="form-label" style="margin-top:12px">Code actuel à 6 chiffres</label>
+            <div class="code-input-row">
+              <input type="text" formControlName="code" class="form-control code-input"
+                     placeholder="000000" maxlength="6">
+              <button type="submit" class="btn-gmao danger" [disabled]="saving || twoFACodeForm.invalid">
+                <i class="bi bi-shield-x"></i> Désactiver la 2FA
+              </button>
+            </div>
+          </form>
+
+          <button class="btn-gmao outline" (click)="cancelTwoFA()" style="margin-top:12px">
+            Annuler
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

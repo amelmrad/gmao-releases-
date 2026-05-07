@@ -1,0 +1,336 @@
+<!-- ========================= -->
+<!-- NOUVELLE ALERTE TÂCHE POUR TECHNICIEN -->
+<!-- ========================= -->
+<div *ngIf="showNewTaskAlert" class="tech-task-alert">
+  <i class="bi bi-bell-fill"></i>
+  Nouvelle tâche assignée : <strong>{{ newTaskTitle }}</strong>
+  <span class="priority-badge" [class]="getPriorityClass(newTaskPriority)">
+    {{ getPriorityLabel(newTaskPriority) }}
+  </span>
+</div>
+
+<!-- ========================= -->
+<!-- En-tête de page -->
+<!-- ========================= -->
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-check2-square"></i> Gestion des tâches</h1>
+    <p>Créer, assigner et suivre les tâches de maintenance</p>
+  </div>
+  <button class="btn-gmao primary" (click)="openCreate()" *ngIf="canCreateTask()">
+    <i class="bi bi-plus-circle-fill"></i> Nouvelle tâche
+  </button>
+</div>
+
+<!-- Alertes succès / erreur -->
+<div class="alert-gmao success" *ngIf="success"><i class="bi bi-check-circle-fill"></i> {{ success }}</div>
+<div class="alert-gmao danger" *ngIf="error"><i class="bi bi-exclamation-triangle-fill"></i> {{ error }}</div>
+
+<!-- Filtres -->
+<div class="gmao-card filters-card">
+  <div class="filters-row">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input type="text" [(ngModel)]="searchTerm" placeholder="Rechercher des tâches..." class="form-control">
+    </div>
+    <select [(ngModel)]="filterStatus" class="form-select filter-select">
+      <option value="">Tous les statuts</option>
+      <option *ngFor="let s of allStatuses" [value]="s">{{ getStatusLabel(s) }}</option>
+    </select>
+    <select [(ngModel)]="filterPriority" class="form-select filter-select">
+      <option value="">Toutes priorités</option>
+      <option *ngFor="let p of priorities" [value]="p">{{ getPriorityLabel(p) }}</option>
+    </select>
+    <span class="result-count">{{ filteredTasks.length }} tâches</span>
+  </div>
+</div>
+
+<!-- Bannière d'alerte d'approbation pour le RESPONSABLE créateur -->
+<div class="alert-gmao warning" *ngIf="isResponsable() && hasPendingApprovalForCurrentUser()">
+  <i class="bi bi-bell-fill"></i>
+  Des tâches attendent votre approbation — consultez le statut <strong>En attente d'approbation</strong> ci-dessous.
+</div>
+
+<!-- Chargement -->
+<div class="loading-state" *ngIf="loading"><div class="loading-spinner"></div></div>
+
+<!-- Tableau des tâches -->
+<div class="gmao-card table-card" *ngIf="!loading">
+  <div class="table-responsive">
+    <table class="gmao-table">
+      <thead>
+      <tr>
+        <th>Tâche</th>
+        <th>Machine</th>
+        <th>Technicien</th>
+        <th>Créée par</th>
+        <th>Priorité</th>
+        <th>Statut</th>
+        <th>Date d'échéance</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let task of filteredTasks" class="slide-in"
+          [class.row-pending-approval]="task.status === 'PENDING_APPROVAL'">
+        <td>
+          <div class="task-title-cell">
+            <span class="priority-dot" [class]="getPriorityClass(task.priority)"></span>
+            <div>
+              <span class="task-name">{{ task.title }}</span>
+              <span *ngIf="task.description" class="task-desc">
+                  {{ task.description | slice:0:50 }}{{ task.description!.length > 50 ? '...' : '' }}
+              </span>
+            </div>
+          </div>
+        </td>
+        <td>
+          <span *ngIf="task.machineName" class="machine-tag">
+            <i class="bi bi-gear-fill"></i> {{ task.machineName }}
+          </span>
+          <span *ngIf="!task.machineName" class="text-muted">—</span>
+        </td>
+        <td>
+          <span *ngIf="task.technicianName" class="tech-tag">
+            <i class="bi bi-person-fill"></i> {{ task.technicianName }}
+          </span>
+          <span *ngIf="!task.technicianName" class="text-muted unassigned">Non assigné</span>
+        </td>
+        <td>
+          <span *ngIf="task.createdByName" class="tech-tag">
+            <i class="bi bi-person-badge-fill"></i> {{ task.createdByName }}
+          </span>
+          <span *ngIf="!task.createdByName" class="text-muted">—</span>
+        </td>
+        <td>
+          <span class="badge-status" [class]="getPriorityClass(task.priority)">
+            {{ getPriorityLabel(task.priority) }}
+          </span>
+        </td>
+        <td>
+          <!-- Statut approuvé -->
+          <span *ngIf="task.status === 'APPROVED'" class="badge-status approved">
+              <i class="bi bi-check-circle-fill"></i> Approuvé
+          </span>
+
+          <!-- Texte d'attente d'approbation pour les non-Responsable -->
+          <span *ngIf="task.status === 'PENDING_APPROVAL' && !isResponsable()" class="badge-status pending-approval">
+              <i class="bi bi-hourglass-split"></i> En attente d'approbation
+          </span>
+
+          <!-- Menu déroulant pour TECHNICIEN -->
+          <ng-container *ngIf="isTechnician(); else statusText">
+            <select class="status-select"
+                    *ngIf="task.status !== 'APPROVED' && canChangeStatus(task) && !(task.status === 'PENDING_APPROVAL' && !isResponsable())"
+                    [value]="task.status"
+                    (change)="quickStatus(task, $any($event.target).value)">
+              <option *ngFor="let s of getStatusOptions(task)" [value]="s" [selected]="s === task.status">
+                {{ getStatusLabel(s) }}
+              </option>
+              <option *ngIf="task.status === 'PENDING_APPROVAL'" [value]="task.status" selected>
+                En attente d'approbation
+              </option>
+            </select>
+          </ng-container>
+
+          <!-- Texte de statut pour les autres utilisateurs -->
+          <ng-template #statusText>
+            <span *ngIf="task.status !== 'APPROVED' && task.status !== 'PENDING_APPROVAL'" class="badge-status" [class]="getStatusClass(task.status)">
+                {{ getStatusLabel(task.status) }}
+            </span>
+          </ng-template>
+        </td>
+        <td>
+          <span *ngIf="task.dueDate"
+                [class.overdue]="task.dueDate < today && task.status !== 'COMPLETED' && task.status !== 'APPROVED'">
+            {{ task.dueDate | date:'dd MMM yyyy' }}
+          </span>
+          <span *ngIf="!task.dueDate" class="text-muted">—</span>
+        </td>
+        <td>
+          <div class="action-btns">
+            <button class="btn-icon approve-btn" (click)="approveTask(task)"
+                    *ngIf="canApprove(task)" title="Approuver et remettre la machine en service">
+              <i class="bi bi-check2-circle"></i>
+            </button>
+            <button class="btn-icon history" (click)="openHistory(task)" title="Historique">
+              <i class="bi bi-clock-history"></i>
+            </button>
+            <button class="btn-icon edit" (click)="openEdit(task)" *ngIf="canEditTask(task)" title="Modifier">
+              <i class="bi bi-pencil-fill"></i>
+            </button>
+            <button class="btn-icon delete" (click)="openDeleteModal(task)" *ngIf="canDeleteTask(task)" title="Supprimer">
+              <i class="bi bi-trash-fill"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+      <tr *ngIf="filteredTasks.length === 0">
+        <td colspan="8" class="empty-row"><i class="bi bi-inbox"></i> Aucune tâche trouvée</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ========================= -->
+<!-- MODAL CRÉATION / ÉDITION DE TÂCHE -->
+<!-- ========================= -->
+<div class="modal-backdrop-dark" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-gmao" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="bi" [class.bi-plus-circle-fill]="!editingTask" [class.bi-pencil-fill]="editingTask"></i>
+        {{ editingTask ? 'Modifier la tâche' : 'Nouvelle tâche' }}
+      </h3>
+      <button class="close-btn" (click)="closeModal()">&times;</button>
+    </div>
+
+    <div class="alert-gmao danger" *ngIf="error">
+      <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+    </div>
+
+    <form [formGroup]="taskForm" (ngSubmit)="save()">
+      <!-- Titre -->
+      <div class="form-group mb-3">
+        <label class="form-label">Titre <span class="required">*</span></label>
+        <input type="text" class="form-control" formControlName="title" required placeholder="Titre de la tâche">
+        <small class="text-danger" *ngIf="taskForm.get('title')?.touched && taskForm.get('title')?.hasError('required')">
+          Le titre est obligatoire.
+        </small>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group mb-3">
+        <label class="form-label">Description</label>
+        <textarea class="form-control" formControlName="description" rows="3" placeholder="Description de la tâche..."></textarea>
+      </div>
+
+      <!-- Machine -->
+      <div class="form-group mb-3">
+        <label class="form-label">Machine <span class="required">*</span></label>
+        <select class="form-select" formControlName="machineId" required *ngIf="machines.length > 0">
+          <option [ngValue]="null">— Sélectionner une machine —</option>
+          <option *ngFor="let m of machines" [ngValue]="m.id">{{ m.name }}</option>
+        </select>
+        <div class="empty-placeholder" *ngIf="machines.length === 0">
+          <i class="bi bi-info-circle"></i> Aucune machine disponible
+        </div>
+        <small class="text-danger" *ngIf="taskForm.get('machineId')?.touched && taskForm.get('machineId')?.hasError('required')">
+          Vous devez sélectionner une machine pour cette tâche.
+        </small>
+      </div>
+
+      <!-- Technicien -->
+      <div class="form-group mb-3">
+        <label class="form-label">Technicien assigné <span class="required">*</span></label>
+        <select class="form-select" formControlName="technicianId" required>
+          <option [ngValue]="null">— Sélectionner un technicien —</option>
+          <option *ngFor="let t of technicians" [ngValue]="t.id">{{ t.name }}</option>
+        </select>
+        <small class="text-danger" *ngIf="taskForm.get('technicianId')?.touched && taskForm.get('technicianId')?.hasError('required')">
+          Vous devez assigner un technicien à la tâche.
+        </small>
+      </div>
+
+      <!-- Priorité & Statut -->
+      <div class="form-row">
+        <div class="form-group mb-3 flex-1">
+          <label class="form-label">Priorité <span class="required">*</span></label>
+          <select class="form-select" formControlName="priority">
+            <option *ngFor="let p of priorities" [value]="p">{{ getPriorityLabel(p) }}</option>
+          </select>
+        </div>
+        <div class="form-group mb-3 flex-1">
+          <label class="form-label">Statut</label>
+          <input type="text" class="form-control" formControlName="status" value="En attente" readonly>
+        </div>
+      </div>
+
+      <!-- Date d'échéance -->
+      <div class="form-group mb-3">
+        <label class="form-label">Date d'échéance <span class="required">*</span></label>
+        <input type="date" class="form-control" formControlName="dueDate" required [min]="today">
+        <small class="text-danger" *ngIf="taskForm.get('dueDate')?.touched && taskForm.get('dueDate')?.hasError('required')">
+          La date d'échéance est obligatoire.
+        </small>
+      </div>
+
+      <!-- Actions -->
+      <div class="modal-actions">
+        <button type="button" class="btn-gmao outline" (click)="closeModal()">
+          <i class="bi bi-x-lg"></i> Annuler
+        </button>
+        <button type="submit" class="btn-gmao primary" [disabled]="taskForm.invalid || saving">
+          <span class="spinner-sm" *ngIf="saving"></span>
+          <i class="bi bi-check-lg" *ngIf="!saving"></i>
+          {{ saving ? 'Enregistrement...' : (editingTask ? 'Mettre à jour' : 'Créer') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========================= -->
+<!-- MODAL HISTORIQUE -->
+<!-- ========================= -->
+<div class="modal-backdrop-dark" *ngIf="showHistoryModal" (click)="closeHistoryModal()">
+  <div class="modal-gmao" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><i class="bi bi-clock-history"></i> Historique — {{ selectedTask?.title }}</h3>
+      <button class="close-btn" (click)="closeHistoryModal()">&times;</button>
+    </div>
+
+    <!-- Formulaire d'ajout de note -->
+    <div class="history-form">
+      <form [formGroup]="historyForm" (ngSubmit)="addHistory()">
+        <div class="form-group">
+          <textarea class="form-control" formControlName="notes" rows="2" placeholder="Ajouter une note..."></textarea>
+        </div>
+        <div style="text-align: right; margin-top: 8px;">
+          <button type="submit" class="btn-gmao primary" [disabled]="historyForm.invalid || saving" style="padding: 6px 14px; font-size: 0.8rem;">
+            <span class="spinner-sm" *ngIf="saving"></span>
+            <i class="bi bi-plus-lg" *ngIf="!saving"></i> Ajouter
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Timeline -->
+    <div class="history-timeline" *ngIf="taskHistory.length > 0">
+      <div class="history-item" *ngFor="let h of taskHistory">
+        <div class="history-dot"></div>
+        <div class="history-content">
+          <div class="history-header">
+            <span class="history-tech"><i class="bi bi-person-fill"></i> {{ h.technicianName || 'Système' }}</span>
+            <span class="history-time">{{ h.completedAt | date:'dd MMM yyyy HH:mm' }}</span>
+          </div>
+          <p class="history-notes">{{ h.notes }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="empty-history" *ngIf="taskHistory.length === 0">
+      <i class="bi bi-journal-text"></i>
+      <span>Aucun historique pour cette tâche</span>
+    </div>
+  </div>
+</div>
+
+<!-- ========================= -->
+<!-- MODAL SUPPRESSION -->
+<!-- ========================= -->
+<div class="modal-backdrop-dark" *ngIf="showDeleteModal" (click)="closeDeleteModal()">
+  <div class="delete-modal" (click)="$event.stopPropagation()">
+    <i class="bi bi-exclamation-triangle-fill" style="font-size: 2.5rem; color: #e74c3c;"></i>
+    <h3 style="margin-top: 12px;">Supprimer la tâche ?</h3>
+    <p style="color: var(--color-text-secondary); margin-top: 6px;">
+      Êtes-vous sûr de vouloir supprimer <strong>« {{ taskToDelete?.title }} »</strong> ? Cette action est irréversible.
+    </p>
+    <div class="modal-actions" style="justify-content: center;">
+      <button class="btn-gmao outline" (click)="closeDeleteModal()">Annuler</button>
+      <button class="btn-gmao danger" (click)="confirmDelete()">
+        <i class="bi bi-trash-fill"></i> Supprimer
+      </button>
+    </div>
+  </div>
+</div>

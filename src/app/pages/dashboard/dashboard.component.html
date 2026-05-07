@@ -1,0 +1,252 @@
+<div class="page-header">
+  <div class="header-left">
+    <h1>Bon retour, {{ userName }}</h1>
+    <p>Voici l'état actuel de votre flotte industrielle aujourd'hui</p>
+  </div>
+  <div class="header-right">
+    <span class="role-tag">{{ userRole }}</span>
+    <button class="btn-gmao outline" (click)="loadData()" [disabled]="refreshing">
+      <i class="bi bi-arrow-clockwise" [class.spin]="refreshing"></i>
+      {{ refreshing ? 'Actualisation...' : 'Actualiser' }}
+    </button>
+  </div>
+</div>
+
+<!-- Loading state -->
+<div class="loading-state" *ngIf="loading">
+  <div class="loading-spinner"></div>
+  <p>Chargement des données du tableau de bord...</p>
+</div>
+
+<!-- Technician Dashboard -->
+<div *ngIf="!loading && isTechnician">
+  <!-- Stat Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon"><i class="bi bi-list-task"></i></div>
+      <div class="stat-value">{{ techAssignedTasks.length }}</div>
+      <div class="stat-label">Tâches assignées</div>
+      <div class="stat-sub">Toutes vos tâches</div>
+    </div>
+
+    <div class="stat-card warning">
+      <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+      <div class="stat-value">{{ techPendingTasks }}</div>
+      <div class="stat-label">En attente</div>
+      <div class="stat-sub">À démarrer</div>
+    </div>
+
+    <div class="stat-card info">
+      <div class="stat-icon"><i class="bi bi-arrow-repeat"></i></div>
+      <div class="stat-value">{{ techInProgressTasks }}</div>
+      <div class="stat-label">En cours</div>
+      <div class="stat-sub">Travail actif</div>
+    </div>
+
+    <div class="stat-card success">
+      <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+      <div class="stat-value">{{ techCompletedTasks }}</div>
+      <div class="stat-label">Terminées</div>
+      <div class="stat-sub">{{ techCompletionRate }}% taux d'achèvement</div>
+    </div>
+  </div>
+
+  <!-- Progress Bars -->
+  <div class="progress-section">
+    <div class="gmao-card">
+      <h3 class="section-title"><i class="bi bi-graph-up"></i> Progression personnelle</h3>
+      <div class="progress-row">
+        <div class="progress-info">
+          <span>Taux d'achèvement des tâches</span>
+          <span class="progress-pct" [class.good]="techCompletionRate >= 70" [class.warn]="techCompletionRate < 70">{{ techCompletionRate }}%</span>
+        </div>
+        <div class="progress-gmao">
+          <div class="progress-fill success" [style.width.%]="techCompletionRate"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Tasks -->
+  <div class="bottom-grid" style="grid-template-columns: 1fr;">
+    <div class="gmao-card">
+      <div class="card-header-row">
+        <h3 class="section-title"><i class="bi bi-list-check"></i> Mes tâches récentes</h3>
+        <a routerLink="/tasks" class="view-all">Voir tout <i class="bi bi-arrow-right"></i></a>
+      </div>
+      <div *ngIf="recentTasks.length === 0" class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <span>Aucune tâche pour l'instant</span>
+      </div>
+      <div class="task-list">
+        <div class="task-row" *ngFor="let task of recentTasks">
+          <div class="task-main">
+            <span class="task-title">{{ task.title }}</span>
+            <span class="task-meta">{{ task.machineName || 'Pas de machine' }}</span>
+          </div>
+          <div class="task-badges">
+            <span class="badge-status" [ngClass]="getPriorityClass(task.priority)">
+              {{ getPriorityLabel(task.priority) }}
+            </span>
+            <span class="badge-status" [ngClass]="getStatusClass(task.status)">
+              {{ getStatusLabel(task.status) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="!loading && stats && isAdminOrResponsable">
+
+  <!-- Stat Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon"><i class="bi bi-gear-wide-connected"></i></div>
+      <div class="stat-value">{{ stats.totalMachines }}</div>
+      <div class="stat-label">Total Machines</div>
+      <div class="stat-sub operational">{{ stats.operationalMachines }} en fonctionnement</div>
+    </div>
+
+    <div class="stat-card warning">
+      <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+      <div class="stat-value">{{ stats.pendingTasks }}</div>
+      <div class="stat-label">Tâches en attente</div>
+    </div>
+
+    <div class="stat-card success">
+      <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+      <div class="stat-value">{{ stats.completedTasks }}</div>
+      <div class="stat-label">Tâches terminées</div>
+      <div class="stat-sub">{{ completionRate }}% taux d'achèvement</div>
+    </div>
+
+    <div class="stat-card info">
+      <div class="stat-icon"><i class="bi bi-arrow-repeat"></i></div>
+      <div class="stat-value">{{ stats.inProgressTasks }}</div>
+      <div class="stat-label">Tâches en cours</div>
+    </div>
+  </div>
+
+  <!-- Progress Bars -->
+  <div class="progress-section">
+    <div class="gmao-card">
+      <h3 class="section-title"><i class="bi bi-graph-up"></i> Santé & Achèvement</h3>
+      <div class="progress-row">
+        <div class="progress-info">
+          <span>Taux de santé des machines</span>
+          <span class="progress-pct" [class.good]="healthRate >= 70" [class.warn]="healthRate < 70 && healthRate >= 40" [class.bad]="healthRate < 40">{{ healthRate }}%</span>
+        </div>
+        <div class="progress-gmao">
+          <div class="progress-fill" [class.success]="healthRate >= 70" [class.warning]="healthRate < 70 && healthRate >= 40" [class.danger]="healthRate < 40" [style.width.%]="healthRate"></div>
+        </div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-info">
+          <span>Taux d'achèvement des tâches</span>
+          <span class="progress-pct" [class.good]="completionRate >= 70" [class.warn]="completionRate < 70">{{ completionRate }}%</span>
+        </div>
+        <div class="progress-gmao">
+          <div class="progress-fill success" [style.width.%]="completionRate"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <!-- Machine Status Pie -->
+    <div class="gmao-card chart-card">
+      <h3 class="section-title"><i class="bi bi-pie-chart-fill"></i> Statut des machines</h3>
+      <div class="chart-container" #machineStatusChart [class.hidden]="!hasMachineData"></div>
+      <div class="chart-empty" *ngIf="!hasMachineData">
+        <i class="bi bi-inbox"></i>
+        <span>Aucune machine enregistrée</span>
+      </div>
+    </div>
+
+    <!-- Task Status Bar -->
+    <div class="gmao-card chart-card">
+      <h3 class="section-title"><i class="bi bi-bar-chart-fill"></i> Répartition des tâches</h3>
+      <div class="chart-container" #taskStatusChart [class.hidden]="!hasTaskData"></div>
+      <div class="chart-empty" *ngIf="!hasTaskData">
+        <i class="bi bi-inbox"></i>
+        <span>Aucune tâche pour l'instant</span>
+      </div>
+    </div>
+
+    <!-- Machine Health Gauge + Risk Pie -->
+    <div class="gmao-card chart-card">
+      <h3 class="section-title"><i class="bi bi-speedometer2"></i> L'état des machines</h3>
+      <div class="health-split">
+        <div class="health-gauge" #machineHealthChart [class.hidden]="!hasMachineData"></div>
+        <div class="health-risk">
+          <div class="health-risk-title" *ngIf="criticalPredictions.length > 0">Risque le plus élevé</div>
+          <div class="health-risk-chart" #riskChart [class.hidden]="criticalPredictions.length === 0"></div>
+          <div class="chart-empty small" *ngIf="criticalPredictions.length === 0">
+            <i class="bi bi-shield-check"></i>
+            <span>Aucun risque critique</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Grid: Recent Tasks + AI Alerts -->
+  <div class="bottom-grid">
+<!-- Recent Tasks -->
+<div class="gmao-card">
+  <div class="card-header-row">
+    <h3 class="section-title"><i class="bi bi-list-check"></i> Tâches récentes</h3>
+    <a routerLink="/tasks" class="view-all">Voir tout <i class="bi bi-arrow-right"></i></a>
+  </div>
+  <div *ngIf="recentTasks.length === 0" class="empty-state">
+    <i class="bi bi-inbox"></i>
+    <span>Aucune tâche pour l'instant</span>
+  </div>
+  <div class="task-list">
+    <div class="task-row" *ngFor="let task of recentTasks">
+      <div class="task-main">
+        <span class="task-title">{{ task.title }}</span>
+        <span class="task-meta">{{ task.machineName || 'Pas de machine' }} · {{ task.technicianName || 'Non assigné' }}</span>
+      </div>
+      <div class="task-badges">
+        <span class="badge-status" [ngClass]="getPriorityClass(task.priority)">
+          {{ getPriorityLabel(task.priority) }}
+        </span>
+        <span class="badge-status" [ngClass]="getStatusClass(task.status)">
+          {{ getStatusLabel(task.status) }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI Critical Alerts -->
+<div class="gmao-card">
+  <div class="card-header-row">
+    <h3 class="section-title"><i class="bi bi-lightning-fill"></i> Alertes critiques AI</h3>
+    <a routerLink="/ai-predictions" class="view-all">Voir tout <i class="bi bi-arrow-right"></i></a>
+  </div>
+  <div *ngIf="criticalPredictions.length === 0" class="empty-state">
+    <i class="bi bi-check-circle-fill" style="color: #a4c494"></i>
+    <span>Aucune alerte critique</span>
+  </div>
+  <div class="alert-list">
+    <div class="alert-row" *ngFor="let pred of criticalPredictions" [ngClass]="{'critical': pred.riskScore >= 75, 'high': pred.riskScore >=50 && pred.riskScore < 75}">
+      <div class="alert-icon">
+        <i class="bi bi-exclamation-triangle-fill" *ngIf="pred.riskScore >= 75"></i>
+        <i class="bi bi-exclamation-circle-fill" *ngIf="pred.riskScore >=50 && pred.riskScore < 75"></i>
+      </div>
+      <div class="alert-content">
+        <span class="alert-machine">{{ pred.machineName }}</span>
+        <span class="alert-msg">{{ pred.alerts[0] }}</span>
+      </div>
+      <div class="alert-score">
+        <span class="risk-score" [ngClass]="getAiRiskClass(pred.riskScore)">{{ pred.riskScore | number:'1.0-0' }}</span>
+        <span class="risk-label">risque</span>
+      </div>
+    </div>
+  </div>
+</div>
